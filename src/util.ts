@@ -19,21 +19,28 @@ export const autoScroll = async (page: puppeteer.Page) => {
     }
 }
 
-export async function downloadSong(url: string) {
+export async function downloadSong(
+    url: string,
+    folderPath: string,
+    withInfoJson: boolean
+) {
     const params = [
-        // '--write-info-json',
         '--restrict-filenames',
         '--extract-audio',
         '--audio-format',
         'mp3',
         '-o',
-        './downloads/%(title)s.%(ext)s',
+        `${folderPath}/%(title)s.%(ext)s`,
     ]
 
-    return new Promise<void>((resolve, reject) => {
+    if (withInfoJson) {
+        params.unshift('--write-info-json')
+    }
+
+    return new Promise<string[]>((resolve, reject) => {
         youtubedl.exec(url, params, {}, (err, output) => {
-            //ignore errors :)
-            resolve()
+            if (err) reject(err)
+            resolve(output)
         })
     })
 }
