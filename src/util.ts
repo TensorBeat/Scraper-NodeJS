@@ -11,7 +11,7 @@ export const autoScroll = async (page: puppeteer.Page) => {
             )
             await page.waitForFunction(
                 `document.body.scrollHeight > ${previousHeight}`,
-                { timeout: 5000 }
+                { timeout: 2500 }
             )
         } catch (e) {
             break

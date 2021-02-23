@@ -2,20 +2,32 @@ require('dotenv').config()
 import { DatalakeServiceClient } from './generated/tensorbeat/datalake_grpc_pb'
 import * as grpc from '@grpc/grpc-js'
 import { Config } from './config'
-import { GetAllSongsRequest } from './generated/tensorbeat/datalake_pb'
+import {
+    GetAllSongsRequest,
+    GetSongsByTagsRequest,
+} from './generated/tensorbeat/datalake_pb'
 import { SoundCloudScrapeMaster } from './scrapers/soundCloudScrapeMaster'
 import IORedis from 'ioredis'
 import { logger } from './logger'
 import { Queue } from 'bullmq'
 import { SongWorker } from './worker'
 import { SongJobData, SongJobReturn } from './interface/songJob'
+import { Storage } from '@google-cloud/storage'
 
 //TODO: https://github.com/felixmosh/bull-board
+import { resolve } from 'dns'
 ;(async () => {
     const redisConnection = await makeRedisConnection()
+    const datalake = new DatalakeServiceClient(
+        Config.DATALAKE_ADDRESS,
+        grpc.credentials.createInsecure()
+    )
 
     if (Config.IS_WORKER || Config.IS_BOTH) {
-        const worker = new SongWorker(redisConnection)
+        const storage = new Storage()
+        const songBucket = storage.bucket(Config.BUCKET_NAME)
+        logger.info(`Uploading songs to: ${Config.BUCKET_NAME}`)
+        const worker = new SongWorker(datalake, redisConnection, songBucket)
     }
 
     if (Config.IS_MASTER || Config.IS_BOTH) {

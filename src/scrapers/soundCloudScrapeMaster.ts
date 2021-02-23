@@ -36,9 +36,11 @@ export class SoundCloudScrapeMaster implements Scraper {
 
         const songUrls: string[] = []
         $('.trackItem__content > .trackItem__trackTitle').each((i, el) => {
-            const songPostfix = $(el).attr('href')
-            const songUrl = `https://soundcloud.com${songPostfix}`
-            songUrls.push(songUrl)
+            const songPostfix = $(el).attr('href')?.split('?')[0]
+            if (songPostfix != null) {
+                const songUrl = `https://soundcloud.com${songPostfix}`
+                songUrls.push(songUrl)
+            }
         })
 
         for (let i = 0; i < songUrls.length; i++) {

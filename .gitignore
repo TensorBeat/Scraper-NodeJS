@@ -2,3 +2,4 @@ node_modules
 dist
 downloads
 .env
+gcp-admin-key.json
