@@ -17,8 +17,8 @@ export class Config {
         process.env.SONG_QUEUE_NAME ??
         (Config.IS_PRODUCTION ? 'scraperSongQueue' : 'scraperTestSongQueue')
 
-    static IS_WORKER = process.env.WORKER == 'true'
-    static IS_CRAWLER = process.env.CRAWLER == 'true'
+    static IS_WORKER = process.env.IS_WORKER == 'true'
+    static IS_CRAWLER = process.env.IS_CRAWLER == 'true'
     static IS_BOTH = !Config.IS_WORKER && !Config.IS_CRAWLER
 
     static BUCKET_NAME = Config.IS_PRODUCTION
