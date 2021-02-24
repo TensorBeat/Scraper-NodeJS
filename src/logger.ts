@@ -1,7 +1,8 @@
 import winston from 'winston'
+import { Config } from './config'
 
 export const logger = winston.createLogger({
-    level: 'debug',
+    level: Config.LOG_LEVEL,
     format: winston.format.combine(
         winston.format.timestamp({
             format: 'YYYY-MM-DD HH:mm:ss',

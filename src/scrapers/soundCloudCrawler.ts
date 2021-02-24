@@ -1,101 +1,160 @@
-import { Queue } from 'bullmq'
+import { Job, Queue, Worker } from 'bullmq'
 import cheerio from 'cheerio'
 import puppeteer from 'puppeteer'
-import { Scraper } from '../interface/scraper'
+import { Config } from '../config'
 import { SongJobData, SongJobReturn } from '../interface/songJob'
+import {
+    SoundCloudCrawlerJobData,
+    SoundCloudCrawlerJobReturn,
+} from '../interface/soundCloudCrawlerJob'
 import { logger } from '../logger'
 import { Datalake } from '../services/datalake'
 import { autoScroll } from '../util'
+import IORedis from 'ioredis'
 
-export class SoundCloudCrawler implements Scraper {
+export class SoundCloudCrawler {
     songQueue: Queue<SongJobData, SongJobReturn>
-    browser: puppeteer.Browser | undefined
+    browser: Promise<puppeteer.Browser>
     datalake: Datalake
+    worker: Worker<SoundCloudCrawlerJobData, SoundCloudCrawlerJobReturn>
+    crawlerQueue: Queue<SoundCloudCrawlerJobData, SoundCloudCrawlerJobReturn>
 
     constructor(
         songQueue: Queue<SongJobData, SongJobReturn>,
-        datalake: Datalake
+        datalake: Datalake,
+        redisConnection: IORedis.Redis
     ) {
-        this.songQueue = songQueue
-        this.datalake = datalake
-    }
-
-    async scrape(): Promise<void> {
-        this.browser = await puppeteer.launch({
+        this.browser = puppeteer.launch({
             defaultViewport: {
                 width: 1000,
                 height: 900,
             },
             headless: true,
         })
-        const page = await this.browser.newPage()
-        await page.goto(
-            'https://soundcloud.com/discover/sets/charts-top:all-music:us',
-            {
-                waitUntil: 'networkidle2',
-            }
-        )
 
-        await autoScroll(page)
+        this.songQueue = songQueue
+        this.datalake = datalake
 
-        const content = await page.content()
-        await page.close()
-        const $ = cheerio.load(content)
-
-        // Breadth first queue
-        const bfQueue: string[] = []
-
-        $('.trackItem__content > .trackItem__trackTitle').each((i, el) => {
-            const songPostfix = $(el).attr('href')?.split('?')[0]
-            if (songPostfix != null) {
-                const songUrl = `https://soundcloud.com${songPostfix}`
-                bfQueue.push(songUrl)
-            }
+        this.crawlerQueue = new Queue<
+            SoundCloudCrawlerJobData,
+            SoundCloudCrawlerJobReturn
+        >(Config.SC_CRAWLER_QUEUE_NAME, {
+            connection: redisConnection,
         })
 
-        await this.sendSongsToWorkerQueue(bfQueue)
+        this.worker = new Worker<
+            SoundCloudCrawlerJobData,
+            SoundCloudCrawlerJobReturn
+        >(Config.SC_CRAWLER_QUEUE_NAME, this.onJob.bind(this), {
+            connection: redisConnection,
+            limiter: {
+                max: 3,
+                duration: 1000,
+            },
+        })
 
-        while (bfQueue.length > 0) {
-            const songUrl = bfQueue.shift()!
+        // give crawler queue the opportunity to make first batch of songs varied
+        this.worker.pause()
+        this.maybeSeedCrawlerQueue().then(() => {
+            this.worker.resume()
+        })
+    }
 
-            /*
-            This doesn't account for the delay it takes for a song to go from in queue to datalake 
-            but should be fine because worker will check both other active workers and the datalake. 
-            
-            This will eventually be true for any given song which prevents infinite looping
-            */
-            const alreadyVisited = await this.datalake.doesSongExist(songUrl)
-            if (alreadyVisited) continue
+    close() {
+        const browserClose = this.browser.then((browser) => browser.close())
+        const workerClose = this.worker.close()
+        return Promise.all([browserClose, workerClose])
+    }
 
-            const relatedUrls = await this.getRelatedSongUrls(songUrl)
-            await this.sendSongsToWorkerQueue(relatedUrls)
-            bfQueue.push(...relatedUrls)
+    async onJob(
+        job: Job<SoundCloudCrawlerJobData, SoundCloudCrawlerJobReturn>
+    ) {
+        const songUrl = job.data.songUrl
+        logger.debug(`Start crawling: ${job.data.songUrl}`)
 
-            logger.info(`${bfQueue.length} songs in crawler queue`)
+        const alreadyDownloaded = await this.datalake.doesSongExist(songUrl)
+        if (alreadyDownloaded) return 'already downloaded'
+
+        const relatedUrls = await this.getRelatedSongUrls(songUrl)
+        await this.sendSongsToWorkerQueue(relatedUrls)
+        await this.sendUrlsToCrawlerQueue(relatedUrls)
+
+        logger.info(
+            `Added ${relatedUrls.length} songs from crawling: ${job.data.songUrl}`
+        )
+
+        return 'done'
+    }
+
+    async maybeSeedCrawlerQueue() {
+        const crawlerQueueLength = await this.crawlerQueue.getWaitingCount()
+        if (crawlerQueueLength != 0) {
+            logger.info(
+                `Crawler queue already contains ${crawlerQueueLength} jobs. Skipping seeding!`
+            )
+            return
         }
 
-        this.browser.close()
+        logger.info(`Crawler queue is empty, seeding with charts...`)
+
+        const browser = await this.browser
+
+        for (let i = 0; i < Config.SC_SEED_CHARTS_URLS.length; i++) {
+            const chartUrl = Config.SC_SEED_CHARTS_URLS[i]
+
+            logger.info(`Seeding: ${chartUrl}`)
+
+            const page = await browser.newPage()
+            await page.goto(chartUrl, {
+                waitUntil: 'networkidle2',
+            })
+
+            await autoScroll(page)
+
+            const content = await page.content()
+            await page.close()
+            const $ = cheerio.load(content)
+
+            const songUrls: string[] = []
+
+            $('.trackItem__content > .trackItem__trackTitle').each((i, el) => {
+                const songPostfix = $(el).attr('href')?.split('?')[0]
+                if (songPostfix != null) {
+                    const songUrl = `https://soundcloud.com${songPostfix}`
+                    songUrls.push(songUrl)
+                }
+            })
+
+            await this.sendSongsToWorkerQueue(songUrls)
+            await this.sendUrlsToCrawlerQueue(songUrls)
+        }
+
+        logger.info(`Done seeding!`)
     }
 
     private async sendSongsToWorkerQueue(songUrls: string[]) {
         for (let i = 0; i < songUrls.length; i++) {
             const songUrl = songUrls[i]
-            logger.info(`Sent to queue: ${songUrl}`)
+            logger.debug(`Sent to song worker queue: ${songUrl}`)
             await this.songQueue.add(songUrl, { downloadUrl: songUrl })
         }
     }
 
-    async getRelatedSongUrls(songUrl: string): Promise<string[]> {
-        if (this.browser == undefined) {
-            logger.error("Web browser hasn't been initialized")
-            throw new Error("Web browser hasn't been initialized")
+    private async sendUrlsToCrawlerQueue(songUrls: string[]) {
+        for (let i = 0; i < songUrls.length; i++) {
+            const songUrl = songUrls[i]
+            logger.debug(`Sent to crawler queue: ${songUrl}`)
+            await this.crawlerQueue.add(songUrl, { songUrl: songUrl })
         }
+    }
 
+    async getRelatedSongUrls(songUrl: string): Promise<string[]> {
         const relatedUrls: string[] = []
 
         const recommendedUrl = `${songUrl}/recommended`
 
-        const page = await this.browser.newPage()
+        const browser = await this.browser
+        const page = await browser.newPage()
         await page.goto(recommendedUrl, {
             waitUntil: 'networkidle2',
         })

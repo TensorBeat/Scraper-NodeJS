@@ -36,12 +36,26 @@ import { SongWorker } from './songWorker'
             songBucket,
             songQueue
         )
+        process.on('SIGTERM', async () => {
+            await worker.close()
+        })
     }
 
-    if (Config.IS_MASTER || Config.IS_BOTH) {
-        const scraper = new SoundCloudCrawler(songQueue, datalake)
-        await scraper.scrape()
+    if (Config.IS_CRAWLER || Config.IS_BOTH) {
+        const scraper = new SoundCloudCrawler(
+            songQueue,
+            datalake,
+            redisConnection
+        )
+        process.on('SIGTERM', async () => {
+            await scraper.close()
+        })
     }
+
+    process.on('SIGTERM', () => {
+        redisConnection.disconnect()
+        datalakeClient.close()
+    })
 })()
 
 // test

@@ -32,7 +32,6 @@ export class SongWorker {
             this.onJob.bind(this),
             {
                 connection: redisConnection,
-                // limits to max 1 song per sec across all workers
                 limiter: {
                     max: 10,
                     duration: 1000,
@@ -53,11 +52,14 @@ export class SongWorker {
             SongJobReturn
         >[] = await this.songQueue.getActive()
 
-        const res = activeSongJobs.find((activeSongJob) => {
-            return activeSongJob.data.downloadUrl == job.data.downloadUrl
-        })
+        const activeJobs = activeSongJobs.reduce((total, activeSongJob) => {
+            if (activeSongJob.data.downloadUrl == job.data.downloadUrl) {
+                total++
+            }
+            return total
+        }, 0)
 
-        return res != null
+        return activeJobs > 1
     }
 
     async onJob(job: Job<SongJobData, SongJobReturn>) {
@@ -77,7 +79,7 @@ export class SongWorker {
 
         const folderPath = `./downloads/${uuidv4()}`
 
-        logger.info(`Downloading: ${downloadUrl}`)
+        logger.debug(`Downloading: ${downloadUrl}`)
         await downloadSong(downloadUrl, folderPath, true)
 
         const songFileNames = await fg(`${folderPath}/*.mp3`)
@@ -134,9 +136,11 @@ export class SongWorker {
 
         await this.datalake.uploadAddFile(addFile)
 
-        logger.info(`Uploaded Metadata to Datalake`)
+        logger.debug(`Uploaded Metadata to Datalake`)
 
         fs.rmSync(folderPath, { recursive: true, force: true })
+
+        logger.info(`Finished Job: ${downloadUrl}`)
 
         return 'done'
     }
