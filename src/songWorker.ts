@@ -3,7 +3,6 @@ import { Job, Queue, Worker } from 'bullmq'
 import fg from 'fast-glob'
 import fs from 'fs'
 import IORedis from 'ioredis'
-import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { Config } from './config'
 import { AddFile } from './generated/tensorbeat/common_pb'
@@ -84,7 +83,7 @@ export class SongWorker {
 
         const songFileNames = await fg(`${folderPath}/*.mp3`)
         const songFilePath = songFileNames[0]
-        const songFileName = path.basename(songFilePath)
+        const songFileName = `${uuidv4()}.mp3`
 
         logger.debug(`Uploading to google cloud: ${songFileName}`)
 
