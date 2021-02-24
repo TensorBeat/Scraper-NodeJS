@@ -46,7 +46,7 @@ metadata:
   namespace: tensorbeat
   name: scraper-song-worker
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: scraper-song-worker
@@ -55,6 +55,11 @@ spec:
       labels:
         app: scraper-song-worker
     spec:
+      tolerations:
+        - key: cloud.google.com/gke-preemptible
+          operator: Equal
+          value: "true"
+          effect: PreferNoSchedule
       volumes:
         - name: google-cloud-key
           secret:
