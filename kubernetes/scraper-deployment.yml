@@ -19,7 +19,7 @@ spec:
             secretName: gcp-admin-key
       containers:
       - name: scraper-soundcloud-crawler
-        image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.6
+        image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.8
         volumeMounts:
         - name: google-cloud-key
           mountPath: /var/secrets/google
@@ -46,7 +46,7 @@ metadata:
   namespace: tensorbeat
   name: scraper-song-worker
 spec:
-  replicas: 4
+  replicas: 8
   selector:
     matchLabels:
       app: scraper-song-worker
@@ -73,7 +73,7 @@ spec:
             secretName: gcp-admin-key
       containers:
       - name: scraper-song-worker
-        image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.6
+        image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.8
         volumeMounts:
         - name: google-cloud-key
           mountPath: /var/secrets/google

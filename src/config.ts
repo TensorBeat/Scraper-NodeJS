@@ -30,6 +30,11 @@ export class Config {
         (Config.IS_PRODUCTION ? 'scraperCrawlQueue' : 'scraperTestCrawlQueue')
 
     static SC_SEED_CHARTS_URLS: string[] = [
+        'https://soundcloud.com/discover/sets/charts-trending:all-music:us',
+        'https://soundcloud.com/discover/sets/charts-trending:pop:us',
+        'https://soundcloud.com/discover/sets/charts-trending:rbsoul:us',
+        'https://soundcloud.com/discover/sets/charts-trending:electronic:us',
+        'https://soundcloud.com/discover/sets/charts-trending:rock:us',
         'https://soundcloud.com/discover/sets/charts-top:all-music:us',
         'https://soundcloud.com/discover/sets/charts-top:pop:us',
         'https://soundcloud.com/discover/sets/charts-top:rbsoul:us',
