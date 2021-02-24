@@ -55,11 +55,18 @@ spec:
       labels:
         app: scraper-song-worker
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: cloud.google.com/gke-preemptible
+                operator: Exists
       tolerations:
         - key: cloud.google.com/gke-preemptible
-          operator: Equal
-          value: "true"
-          effect: PreferNoSchedule
+          operator: Exists
+          effect: NoSchedule
       volumes:
         - name: google-cloud-key
           secret:
