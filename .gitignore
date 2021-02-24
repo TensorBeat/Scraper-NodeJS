@@ -3,3 +3,4 @@ dist
 downloads
 .env
 gcp-admin-key.json
+startWorker.cmd

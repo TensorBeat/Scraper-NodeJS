@@ -108,10 +108,10 @@ export class SongWorker {
         const title = infoJson['title']
         const genre = infoJson['genre']
         const artist = infoJson['uploader']
-        const views = infoJson['view_count'].toString()
-        const duration = infoJson['duration'].toString()
-        const likes = infoJson['like_count'].toString()
-        const uploadTimestamp = infoJson['timestamp'].toString()
+        const views = infoJson['view_count']?.toString()
+        const duration = infoJson['duration']?.toString()
+        const likes = infoJson['like_count']?.toString()
+        const uploadTimestamp = infoJson['timestamp']?.toString()
 
         const addFile = new AddFile()
 

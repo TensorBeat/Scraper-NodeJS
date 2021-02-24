@@ -46,7 +46,7 @@ metadata:
   namespace: tensorbeat
   name: scraper-song-worker
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
       app: scraper-song-worker
