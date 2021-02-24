@@ -29,6 +29,8 @@ export class SoundCloudCrawler {
                 width: 1000,
                 height: 900,
             },
+            // args needed for linux/docker
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
             headless: true,
         })
 
@@ -102,7 +104,7 @@ export class SoundCloudCrawler {
         for (let i = 0; i < Config.SC_SEED_CHARTS_URLS.length; i++) {
             const chartUrl = Config.SC_SEED_CHARTS_URLS[i]
 
-            logger.info(`Seeding: ${chartUrl}`)
+            logger.debug(`Seeding: ${chartUrl}`)
 
             const page = await browser.newPage()
             await page.goto(chartUrl, {
@@ -127,6 +129,8 @@ export class SoundCloudCrawler {
 
             await this.sendSongsToWorkerQueue(songUrls)
             await this.sendUrlsToCrawlerQueue(songUrls)
+
+            logger.info(`Seeded: ${chartUrl}`)
         }
 
         logger.info(`Done seeding!`)
