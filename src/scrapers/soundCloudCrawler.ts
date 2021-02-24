@@ -74,9 +74,6 @@ export class SoundCloudCrawler {
         const songUrl = job.data.songUrl
         logger.debug(`Start crawling: ${job.data.songUrl}`)
 
-        const alreadyDownloaded = await this.datalake.doesSongExist(songUrl)
-        if (alreadyDownloaded) return 'already downloaded'
-
         const relatedUrls = await this.getRelatedSongUrls(songUrl)
         await this.sendSongsToWorkerQueue(relatedUrls)
         await this.sendUrlsToCrawlerQueue(relatedUrls)

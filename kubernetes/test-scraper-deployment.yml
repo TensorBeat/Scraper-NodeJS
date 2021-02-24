@@ -1,79 +1,79 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: tensorbeat
-  name: test-scraper-soundcloud-crawler
+    namespace: tensorbeat
+    name: test-scraper-soundcloud-crawler
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: test-scraper-soundcloud-crawler
-  template:
-    metadata:
-      labels:
-        app: test-scraper-soundcloud-crawler
-    spec:
-      volumes:
-        - name: google-cloud-key
-          secret:
-            secretName: gcp-admin-key
-      containers:
-      - name: test-scraper-soundcloud-crawler
-        image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.8
-        volumeMounts:
-        - name: google-cloud-key
-          mountPath: /var/secrets/google
-        env:
-          - name: IS_CRAWLER
-            value: "true"
-          - name: DATALAKE_ADDRESS
-            value: test-datalake:50051
-          - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: /var/secrets/google/key.json
-          - name: REDIS_HOST
-            value: redis-master.redis.svc.cluster.local
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: redis
-                key: redis-password
+    replicas: 1
+    selector:
+        matchLabels:
+            app: test-scraper-soundcloud-crawler
+    template:
+        metadata:
+            labels:
+                app: test-scraper-soundcloud-crawler
+        spec:
+            volumes:
+                - name: google-cloud-key
+                  secret:
+                      secretName: gcp-admin-key
+            containers:
+                - name: test-scraper-soundcloud-crawler
+                  image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.9
+                  volumeMounts:
+                      - name: google-cloud-key
+                        mountPath: /var/secrets/google
+                  env:
+                      - name: IS_CRAWLER
+                        value: 'true'
+                      - name: DATALAKE_ADDRESS
+                        value: test-datalake:50051
+                      - name: GOOGLE_APPLICATION_CREDENTIALS
+                        value: /var/secrets/google/key.json
+                      - name: REDIS_HOST
+                        value: redis-master.redis.svc.cluster.local
+                      - name: REDIS_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: redis
+                                key: redis-password
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: tensorbeat
-  name: test-scraper-song-worker
+    namespace: tensorbeat
+    name: test-scraper-song-worker
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: test-scraper-song-worker
-  template:
-    metadata:
-      labels:
-        app: test-scraper-song-worker
-    spec:
-      volumes:
-        - name: google-cloud-key
-          secret:
-            secretName: gcp-admin-key
-      containers:
-      - name: test-scraper-song-worker
-        image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.8
-        volumeMounts:
-        - name: google-cloud-key
-          mountPath: /var/secrets/google
-        env:
-          - name: IS_WORKER
-            value: "true"
-          - name: DATALAKE_ADDRESS
-            value: test-datalake:50051
-          - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: /var/secrets/google/key.json
-          - name: REDIS_HOST
-            value: redis-master.redis.svc.cluster.local
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: redis
-                key: redis-password
+    replicas: 1
+    selector:
+        matchLabels:
+            app: test-scraper-song-worker
+    template:
+        metadata:
+            labels:
+                app: test-scraper-song-worker
+        spec:
+            volumes:
+                - name: google-cloud-key
+                  secret:
+                      secretName: gcp-admin-key
+            containers:
+                - name: test-scraper-song-worker
+                  image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.9
+                  volumeMounts:
+                      - name: google-cloud-key
+                        mountPath: /var/secrets/google
+                  env:
+                      - name: IS_WORKER
+                        value: 'true'
+                      - name: DATALAKE_ADDRESS
+                        value: test-datalake:50051
+                      - name: GOOGLE_APPLICATION_CREDENTIALS
+                        value: /var/secrets/google/key.json
+                      - name: REDIS_HOST
+                        value: redis-master.redis.svc.cluster.local
+                      - name: REDIS_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: redis
+                                key: redis-password
