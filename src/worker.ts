@@ -1,4 +1,4 @@
-import { Worker, Job } from 'bullmq'
+import { Worker, Job, Queue } from 'bullmq'
 import { Config } from './config'
 import { logger } from './logger'
 import IORedis from 'ioredis'
@@ -15,19 +15,23 @@ import {
 } from './generated/tensorbeat/datalake_pb'
 import { Bucket } from '@google-cloud/storage'
 import path from 'path'
+import { Datalake } from './services/datalake'
 
 export class SongWorker {
     worker: Worker<SongJobData, SongJobReturn>
-    datalake: DatalakeServiceClient
+    datalake: Datalake
     bucket: Bucket
+    songQueue: Queue<SongJobData, SongJobReturn>
 
     constructor(
-        datalake: DatalakeServiceClient,
+        datalake: Datalake,
         redisConnection: IORedis.Redis,
-        bucket: Bucket
+        bucket: Bucket,
+        songQueue: Queue<SongJobData, SongJobReturn>
     ) {
         this.bucket = bucket
         this.datalake = datalake
+        this.songQueue = songQueue
         this.worker = new Worker<SongJobData, SongJobReturn>(
             Config.SONG_QUEUE_NAME,
             this.onJob.bind(this),
@@ -46,35 +50,19 @@ export class SongWorker {
         return this.worker.close()
     }
 
-    async songAlreadyExists(downloadUrl: string) {
-        return new Promise<boolean>((resolve, reject) => {
-            const req = new GetSongsByTagsRequest()
-            req.getTagsMap().set('downloadUrl', downloadUrl)
+    async isAlreadyBeingProcessedByOtherWorker(
+        job: Job<SongJobData, SongJobReturn>
+    ) {
+        const activeSongJobs: Job<
+            SongJobData,
+            SongJobReturn
+        >[] = await this.songQueue.getActive()
 
-            this.datalake.getSongsByTags(req, (err, res) => {
-                if (err) {
-                    // on error assume song doesnt exist
-                    resolve(false)
-                } else {
-                    const songExists = res.getSongsList().length > 0
-                    resolve(songExists)
-                }
-            })
+        const res = activeSongJobs.find((activeSongJob) => {
+            return activeSongJob.data.downloadUrl == job.data.downloadUrl
         })
-    }
 
-    async uploadAddFile(addFile: AddFile) {
-        return new Promise<void>((resolve, reject) => {
-            const addSongsReq = new AddSongsRequest()
-            addSongsReq.addSongs(addFile)
-            this.datalake.addSongs(addSongsReq, (err, res) => {
-                if (err) {
-                    reject()
-                } else {
-                    resolve()
-                }
-            })
-        })
+        return res != null
     }
 
     async onJob(job: Job<SongJobData, SongJobReturn>) {
@@ -82,9 +70,12 @@ export class SongWorker {
 
         logger.debug(`Received Job: ${downloadUrl}`)
 
-        const alreadyExists = await this.songAlreadyExists(downloadUrl)
+        if (await this.isAlreadyBeingProcessedByOtherWorker(job)) {
+            logger.info(`Another worker is processing: ${downloadUrl}`)
+            return 'another worker is processing this url'
+        }
 
-        if (alreadyExists) {
+        if (await this.datalake.doesSongExist(downloadUrl)) {
             logger.info(`Already Downloaded: ${downloadUrl}`)
             return 'already downloaded'
         }
@@ -143,7 +134,7 @@ export class SongWorker {
         if (duration != null) addFile.getTagsMap().set('duration', duration)
         if (likes != null) addFile.getTagsMap().set('likes', likes)
 
-        await this.uploadAddFile(addFile)
+        await this.datalake.uploadAddFile(addFile)
 
         logger.info(`Uploaded Metadata to Datalake`)
 

@@ -16,29 +16,36 @@ import { Storage } from '@google-cloud/storage'
 
 //TODO: https://github.com/felixmosh/bull-board
 import { resolve } from 'dns'
+import { Datalake } from './services/datalake'
 ;(async () => {
     const redisConnection = await makeRedisConnection()
-    const datalake = new DatalakeServiceClient(
+    const datalakeClient = new DatalakeServiceClient(
         Config.DATALAKE_ADDRESS,
         grpc.credentials.createInsecure()
+    )
+    const datalake = new Datalake(datalakeClient)
+
+    const songQueue = new Queue<SongJobData, SongJobReturn>(
+        Config.SONG_QUEUE_NAME,
+        {
+            connection: redisConnection,
+        }
     )
 
     if (Config.IS_WORKER || Config.IS_BOTH) {
         const storage = new Storage()
         const songBucket = storage.bucket(Config.BUCKET_NAME)
         logger.info(`Uploading songs to: ${Config.BUCKET_NAME}`)
-        const worker = new SongWorker(datalake, redisConnection, songBucket)
+        const worker = new SongWorker(
+            datalake,
+            redisConnection,
+            songBucket,
+            songQueue
+        )
     }
 
     if (Config.IS_MASTER || Config.IS_BOTH) {
-        const songQueue = new Queue<SongJobData, SongJobReturn>(
-            Config.SONG_QUEUE_NAME,
-            {
-                connection: redisConnection,
-            }
-        )
-
-        const scraper = new SoundCloudScrapeMaster(songQueue)
+        const scraper = new SoundCloudScrapeMaster(songQueue, datalake)
         await scraper.scrape()
     }
 })()
