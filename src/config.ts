@@ -1,7 +1,7 @@
 export class Config {
     static IS_PRODUCTION = process.env.NODE_ENV == 'production'
 
-    static LOG_LEVEL = 'info'
+    static LOG_LEVEL = process.env.LOG_LEVEL ?? 'info'
 
     static DATALAKE_ADDRESS =
         process.env.DATALAKE_ADDRESS ??
