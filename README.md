@@ -12,10 +12,10 @@
 npm install
 ```
 
-# Run (dev)
+# Run
 
 This will start both a master and worker process and start scraping songs
 
 ```sh
-npm run dev
+npm start
 ```
