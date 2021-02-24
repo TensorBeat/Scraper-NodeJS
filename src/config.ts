@@ -1,12 +1,23 @@
 export class Config {
+    static IS_PRODUCTION = process.env.NODE_ENV == 'production'
+
     static DATALAKE_ADDRESS =
-        process.env.DATALAKE_ADDRESS ?? 'grpc.test.tensorbeat.com:50051'
+        process.env.DATALAKE_ADDRESS ??
+        (Config.IS_PRODUCTION
+            ? 'grpc.tensorbeat.com:50051'
+            : 'grpc.test.tensorbeat.com:50051')
+
     static REDIS_HOST = process.env.REDIS_HOST ?? 'redis.tensorbeat.com'
     static REDIS_PORT = parseInt(process.env.REDIS_PORT!) || 6379
     static REDIS_PASSWORD = process.env.REDIS_PASSWORD
-    static IS_PRODUCTION = process.env.NODE_ENV == 'production'
 
-    static SONG_QUEUE_NAME = process.env.QUEUE_NAME ?? 'songsTest'
+    static SONG_QUEUE_NAME =
+        process.env.SONG_QUEUE_NAME ??
+        (Config.IS_PRODUCTION ? 'scraperSongQueue' : 'scraperTestSongQueue')
+
+    static CRAWL_QUEUE_NAME =
+        process.env.CRAWL_QUEUE_NAME ??
+        (Config.IS_PRODUCTION ? 'scraperCrawlQueue' : 'scraperTestCrawlQueue')
 
     static IS_WORKER = process.env.WORKER == 'true'
     static IS_MASTER = process.env.MASTER == 'true'

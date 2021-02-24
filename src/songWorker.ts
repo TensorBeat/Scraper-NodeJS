@@ -1,21 +1,16 @@
-import { Worker, Job, Queue } from 'bullmq'
-import { Config } from './config'
-import { logger } from './logger'
-import IORedis from 'ioredis'
-import { SongJobData, SongJobReturn } from './interface/songJob'
-import { downloadSong } from './util'
-import { v4 as uuidv4 } from 'uuid'
-import fs from 'fs'
-import fg from 'fast-glob'
-import { DatalakeServiceClient } from './generated/tensorbeat/datalake_grpc_pb'
-import { AddFile } from './generated/tensorbeat/common_pb'
-import {
-    AddSongsRequest,
-    GetSongsByTagsRequest,
-} from './generated/tensorbeat/datalake_pb'
 import { Bucket } from '@google-cloud/storage'
+import { Job, Queue, Worker } from 'bullmq'
+import fg from 'fast-glob'
+import fs from 'fs'
+import IORedis from 'ioredis'
 import path from 'path'
+import { v4 as uuidv4 } from 'uuid'
+import { Config } from './config'
+import { AddFile } from './generated/tensorbeat/common_pb'
+import { SongJobData, SongJobReturn } from './interface/songJob'
+import { logger } from './logger'
 import { Datalake } from './services/datalake'
+import { downloadSong } from './util'
 
 export class SongWorker {
     worker: Worker<SongJobData, SongJobReturn>

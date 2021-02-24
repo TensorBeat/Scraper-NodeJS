@@ -7,13 +7,16 @@ import { logger } from '../logger'
 import { Datalake } from '../services/datalake'
 import { autoScroll } from '../util'
 
-export class SoundCloudScrapeMaster implements Scraper {
-    queue: Queue<SongJobData, SongJobReturn>
+export class SoundCloudCrawler implements Scraper {
+    songQueue: Queue<SongJobData, SongJobReturn>
     browser: puppeteer.Browser | undefined
     datalake: Datalake
 
-    constructor(queue: Queue<SongJobData, SongJobReturn>, datalake: Datalake) {
-        this.queue = queue
+    constructor(
+        songQueue: Queue<SongJobData, SongJobReturn>,
+        datalake: Datalake
+    ) {
+        this.songQueue = songQueue
         this.datalake = datalake
     }
 
@@ -78,7 +81,7 @@ export class SoundCloudScrapeMaster implements Scraper {
         for (let i = 0; i < songUrls.length; i++) {
             const songUrl = songUrls[i]
             logger.info(`Sent to queue: ${songUrl}`)
-            await this.queue.add(songUrl, { downloadUrl: songUrl })
+            await this.songQueue.add(songUrl, { downloadUrl: songUrl })
         }
     }
 

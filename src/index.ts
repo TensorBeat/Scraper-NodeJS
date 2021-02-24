@@ -1,22 +1,16 @@
 require('dotenv').config()
-import { DatalakeServiceClient } from './generated/tensorbeat/datalake_grpc_pb'
-import * as grpc from '@grpc/grpc-js'
-import { Config } from './config'
-import {
-    GetAllSongsRequest,
-    GetSongsByTagsRequest,
-} from './generated/tensorbeat/datalake_pb'
-import { SoundCloudScrapeMaster } from './scrapers/soundCloudScrapeMaster'
-import IORedis from 'ioredis'
-import { logger } from './logger'
-import { Queue } from 'bullmq'
-import { SongWorker } from './worker'
-import { SongJobData, SongJobReturn } from './interface/songJob'
 import { Storage } from '@google-cloud/storage'
-
-//TODO: https://github.com/felixmosh/bull-board
-import { resolve } from 'dns'
+import * as grpc from '@grpc/grpc-js'
+import { Queue } from 'bullmq'
+import IORedis from 'ioredis'
+import { Config } from './config'
+import { DatalakeServiceClient } from './generated/tensorbeat/datalake_grpc_pb'
+import { GetAllSongsRequest } from './generated/tensorbeat/datalake_pb'
+import { SongJobData, SongJobReturn } from './interface/songJob'
+import { logger } from './logger'
+import { SoundCloudCrawler } from './scrapers/soundCloudCrawler'
 import { Datalake } from './services/datalake'
+import { SongWorker } from './songWorker'
 ;(async () => {
     const redisConnection = await makeRedisConnection()
     const datalakeClient = new DatalakeServiceClient(
@@ -45,7 +39,7 @@ import { Datalake } from './services/datalake'
     }
 
     if (Config.IS_MASTER || Config.IS_BOTH) {
-        const scraper = new SoundCloudScrapeMaster(songQueue, datalake)
+        const scraper = new SoundCloudCrawler(songQueue, datalake)
         await scraper.scrape()
     }
 })()
