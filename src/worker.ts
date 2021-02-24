@@ -115,6 +115,7 @@ export class SongWorker {
         const views = infoJson['view_count'].toString()
         const duration = infoJson['duration'].toString()
         const likes = infoJson['like_count'].toString()
+        const uploadTimestamp = infoJson['timestamp'].toString()
 
         const addFile = new AddFile()
 
@@ -133,6 +134,8 @@ export class SongWorker {
         if (views != null) addFile.getTagsMap().set('views', views)
         if (duration != null) addFile.getTagsMap().set('duration', duration)
         if (likes != null) addFile.getTagsMap().set('likes', likes)
+        if (uploadTimestamp != null)
+            addFile.getTagsMap().set('uploadTimestamp', uploadTimestamp)
 
         await this.datalake.uploadAddFile(addFile)
 
