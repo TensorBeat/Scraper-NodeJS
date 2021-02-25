@@ -15,6 +15,7 @@ import { logger } from './logger'
 import { SoundCloudCrawler } from './scrapers/soundCloudCrawler'
 import { Datalake } from './services/datalake'
 import { SongWorker } from './songWorker'
+import { onShutdown } from 'node-graceful-shutdown'
 ;(async () => {
     const redisConnection = await makeRedisConnection()
     const datalakeClient = new DatalakeServiceClient(
@@ -36,6 +37,13 @@ import { SongWorker } from './songWorker'
         connection: redisConnection,
     })
 
+    onShutdown(Const.SHUTDOWN_FINAL, [Const.SHUTDOWN_PHASE_ONE], async () => {
+        await crawlerQueue.close()
+        await songQueue.close()
+        datalakeClient.close()
+        redisConnection.disconnect()
+    })
+
     if (Config.IS_WORKER || Config.IS_BOTH) {
         const storage = new Storage()
         const songBucket = storage.bucket(Config.BUCKET_NAME)
@@ -46,7 +54,7 @@ import { SongWorker } from './songWorker'
             songBucket,
             songQueue
         )
-        process.on('SIGTERM', async () => {
+        onShutdown(Const.SHUTDOWN_PHASE_ONE, async () => {
             await worker.close()
         })
     }
@@ -72,17 +80,12 @@ import { SongWorker } from './songWorker'
             }
         )
 
-        process.on('SIGTERM', async () => {
+        onShutdown(Const.SHUTDOWN_PHASE_ONE, async () => {
             await scraper.close()
             await songQueueScheduler.close()
             await scQueueScheduler.close()
         })
     }
-
-    process.on('SIGTERM', () => {
-        redisConnection.disconnect()
-        datalakeClient.close()
-    })
 })()
 
 // test
