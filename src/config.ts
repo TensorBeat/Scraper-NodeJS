@@ -1,35 +1,46 @@
 export class Config {
-    static IS_PRODUCTION = process.env.NODE_ENV == 'production'
+    static readonly IS_PRODUCTION = process.env.NODE_ENV == 'production'
+    static readonly BULL_BOARD_PORT =
+        parseInt(process.env.BULL_BOARD_PORT!) || 8080
 
-    static LOG_LEVEL = process.env.LOG_LEVEL ?? 'info'
+    static readonly LOG_LEVEL = process.env.LOG_LEVEL ?? 'info'
 
-    static DATALAKE_ADDRESS =
+    static readonly DATALAKE_ADDRESS =
         process.env.DATALAKE_ADDRESS ??
         (Config.IS_PRODUCTION
             ? 'grpc.tensorbeat.com:50051'
             : 'grpc.test.tensorbeat.com:50051')
 
-    static REDIS_HOST = process.env.REDIS_HOST ?? 'redis.tensorbeat.com'
-    static REDIS_PORT = parseInt(process.env.REDIS_PORT!) || 6379
-    static REDIS_PASSWORD = process.env.REDIS_PASSWORD
+    static readonly REDIS_HOST =
+        process.env.REDIS_HOST ?? 'redis.tensorbeat.com'
+    static readonly REDIS_PORT = parseInt(process.env.REDIS_PORT!) || 6379
+    static readonly REDIS_PASSWORD = process.env.REDIS_PASSWORD
 
-    static SONG_QUEUE_NAME =
+    static readonly PROD_SONG_QUEUE_NAME = 'scraperSongQueue'
+    static readonly TEST_SONG_QUEUE_NAME = 'scraperTestSongQueue'
+    static readonly SONG_QUEUE_NAME =
         process.env.SONG_QUEUE_NAME ??
-        (Config.IS_PRODUCTION ? 'scraperSongQueue' : 'scraperTestSongQueue')
+        (Config.IS_PRODUCTION
+            ? Config.PROD_SONG_QUEUE_NAME
+            : Config.TEST_SONG_QUEUE_NAME)
 
-    static IS_WORKER = process.env.IS_WORKER == 'true'
-    static IS_CRAWLER = process.env.IS_CRAWLER == 'true'
-    static IS_BOTH = !Config.IS_WORKER && !Config.IS_CRAWLER
+    static readonly IS_WORKER = process.env.IS_WORKER == 'true'
+    static readonly IS_CRAWLER = process.env.IS_CRAWLER == 'true'
+    static readonly IS_BOTH = !Config.IS_WORKER && !Config.IS_CRAWLER
 
-    static BUCKET_NAME = Config.IS_PRODUCTION
+    static readonly BUCKET_NAME = Config.IS_PRODUCTION
         ? 'tensorbeat-songs'
         : 'test-tensorbeat-songs'
 
-    static SC_CRAWLER_QUEUE_NAME =
+    static readonly PROD_SC_CRAWLER_QUEUE_NAME = 'scraperCrawlQueue'
+    static readonly TEST_SC_CRAWLER_QUEUE_NAME = 'scraperTestCrawlQueue'
+    static readonly SC_CRAWLER_QUEUE_NAME =
         process.env.SC_CRAWLER_QUEUE_NAME ??
-        (Config.IS_PRODUCTION ? 'scraperCrawlQueue' : 'scraperTestCrawlQueue')
+        (Config.IS_PRODUCTION
+            ? Config.PROD_SC_CRAWLER_QUEUE_NAME
+            : Config.TEST_SC_CRAWLER_QUEUE_NAME)
 
-    static SC_SEED_CHARTS_URLS: string[] = [
+    static readonly SC_SEED_CHARTS_URLS: string[] = [
         'https://soundcloud.com/discover/sets/charts-trending:all-music:us',
         'https://soundcloud.com/discover/sets/charts-trending:pop:us',
         'https://soundcloud.com/discover/sets/charts-trending:rbsoul:us',

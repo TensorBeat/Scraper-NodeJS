@@ -14,8 +14,14 @@ npm install
 
 # Run
 
-This will start both a master and worker process and start scraping songs
+-   This will start both a master and worker process and start scraping songs
 
 ```sh
 npm start
+```
+
+-   This will start both a dashboard to view the job queues
+
+```sh
+npm run start:bullboard
 ```

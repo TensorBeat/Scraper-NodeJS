@@ -2,8 +2,9 @@ require('dotenv').config()
 import { Storage } from '@google-cloud/storage'
 import * as grpc from '@grpc/grpc-js'
 import { Queue, QueueScheduler } from 'bullmq'
-import IORedis from 'ioredis'
+import { onShutdown } from 'node-graceful-shutdown'
 import { Config } from './config'
+import { Const } from './consts'
 import { DatalakeServiceClient } from './generated/tensorbeat/datalake_grpc_pb'
 import { GetAllSongsRequest } from './generated/tensorbeat/datalake_pb'
 import { SongJobData, SongJobReturn } from './interface/songJob'
@@ -14,9 +15,8 @@ import {
 import { logger } from './logger'
 import { SoundCloudCrawler } from './scrapers/soundCloudCrawler'
 import { Datalake } from './services/datalake'
+import { makeRedisConnection } from './services/redis'
 import { SongWorker } from './songWorker'
-import { onShutdown } from 'node-graceful-shutdown'
-import { Const } from './consts'
 ;(async () => {
     const redisConnection = await makeRedisConnection()
     const datalakeClient = new DatalakeServiceClient(
@@ -101,31 +101,4 @@ async function testDatalake() {
             console.log(song)
         })
     })
-}
-
-async function makeRedisConnection() {
-    if (Config.REDIS_PASSWORD == null) {
-        logger.error('No redis password set! Exiting!')
-        process.exit(1)
-    }
-
-    const redisConnection = new IORedis(Config.REDIS_PORT, Config.REDIS_HOST, {
-        password: Config.REDIS_PASSWORD,
-    })
-
-    try {
-        const res = await redisConnection.ping()
-        logger.debug(`Recieved ping response from redis: ${res}`)
-        if (res != 'PONG') {
-            logger.error('No redis connection! Exiting!')
-            process.exit(1)
-        }
-    } catch (error) {
-        logger.error('No redis connection! Exiting!')
-        process.exit(1)
-    }
-
-    logger.info('Connected to Redis')
-
-    return redisConnection
 }
