@@ -1,12 +1,16 @@
 require('dotenv').config()
 import { Storage } from '@google-cloud/storage'
 import * as grpc from '@grpc/grpc-js'
-import { Queue } from 'bullmq'
+import { Queue, QueueScheduler } from 'bullmq'
 import IORedis from 'ioredis'
 import { Config } from './config'
 import { DatalakeServiceClient } from './generated/tensorbeat/datalake_grpc_pb'
 import { GetAllSongsRequest } from './generated/tensorbeat/datalake_pb'
 import { SongJobData, SongJobReturn } from './interface/songJob'
+import {
+    SoundCloudCrawlerJobData,
+    SoundCloudCrawlerJobReturn,
+} from './interface/soundCloudCrawlerJob'
 import { logger } from './logger'
 import { SoundCloudCrawler } from './scrapers/soundCloudCrawler'
 import { Datalake } from './services/datalake'
@@ -25,6 +29,12 @@ import { SongWorker } from './songWorker'
             connection: redisConnection,
         }
     )
+    const crawlerQueue = new Queue<
+        SoundCloudCrawlerJobData,
+        SoundCloudCrawlerJobReturn
+    >(Config.SC_CRAWLER_QUEUE_NAME, {
+        connection: redisConnection,
+    })
 
     if (Config.IS_WORKER || Config.IS_BOTH) {
         const storage = new Storage()
@@ -45,10 +55,27 @@ import { SongWorker } from './songWorker'
         const scraper = new SoundCloudCrawler(
             songQueue,
             datalake,
-            redisConnection
+            redisConnection,
+            crawlerQueue
         )
+
+        // For now just attach the queue scheduler to the crawler process
+        // Queue scheduler passivley manages delayed and stalled jobs
+        // https://docs.bullmq.io/guide/queuescheduler
+        const songQueueScheduler = new QueueScheduler(Config.SONG_QUEUE_NAME, {
+            connection: redisConnection,
+        })
+        const scQueueScheduler = new QueueScheduler(
+            Config.SC_CRAWLER_QUEUE_NAME,
+            {
+                connection: redisConnection,
+            }
+        )
+
         process.on('SIGTERM', async () => {
             await scraper.close()
+            await songQueueScheduler.close()
+            await scQueueScheduler.close()
         })
     }
 

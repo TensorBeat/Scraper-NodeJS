@@ -22,7 +22,11 @@ export class SoundCloudCrawler {
     constructor(
         songQueue: Queue<SongJobData, SongJobReturn>,
         datalake: Datalake,
-        redisConnection: IORedis.Redis
+        redisConnection: IORedis.Redis,
+        crawlerQueue: Queue<
+            SoundCloudCrawlerJobData,
+            SoundCloudCrawlerJobReturn
+        >
     ) {
         this.browser = puppeteer.launch({
             defaultViewport: {
@@ -37,12 +41,7 @@ export class SoundCloudCrawler {
         this.songQueue = songQueue
         this.datalake = datalake
 
-        this.crawlerQueue = new Queue<
-            SoundCloudCrawlerJobData,
-            SoundCloudCrawlerJobReturn
-        >(Config.SC_CRAWLER_QUEUE_NAME, {
-            connection: redisConnection,
-        })
+        this.crawlerQueue = crawlerQueue
 
         this.worker = new Worker<
             SoundCloudCrawlerJobData,
