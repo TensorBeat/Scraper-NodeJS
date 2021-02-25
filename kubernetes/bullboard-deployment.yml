@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scraper-bullboard
+spec:
+  selector:
+    matchLabels:
+      app: scraper-bullboard
+  template:
+    metadata:
+      labels:
+        app: scraper-bullboard
+    spec:
+      containers:
+      - name: scraper-bullboard
+        image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.2.0
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json
+        - name: REDIS_HOST
+          value: redis-master.redis.svc.cluster.local
+        - name: REDIS_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                  name: redis
+                  key: redis-password
+        args:
+          - "npm"
+          - "run"
+          - "start:bullboard"
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scraper-bullboard
+spec:
+  selector:
+    app: scraper-bullboard
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  namespace: tensorbeat
+  name: scraper-bullboard
+spec:
+  hosts:
+  - "scraper.tensorbeat.com"
+  gateways:
+  - default/tensorbeat-gateway
+  http:
+  - match:
+    - port: 80
+    route:
+    - destination:
+        host: scraper-bullboard
+        port: 
+          number: 80
+
