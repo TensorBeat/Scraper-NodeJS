@@ -49,10 +49,6 @@ export class SoundCloudCrawler {
             SoundCloudCrawlerJobReturn
         >(Config.SC_CRAWLER_QUEUE_NAME, this.onJob.bind(this), {
             connection: redisConnection,
-            limiter: {
-                max: 3,
-                duration: 1000,
-            },
         })
 
         // give crawler queue the opportunity to make first batch of songs varied
