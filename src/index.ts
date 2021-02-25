@@ -16,6 +16,7 @@ import { SoundCloudCrawler } from './scrapers/soundCloudCrawler'
 import { Datalake } from './services/datalake'
 import { SongWorker } from './songWorker'
 import { onShutdown } from 'node-graceful-shutdown'
+import { Const } from './consts'
 ;(async () => {
     const redisConnection = await makeRedisConnection()
     const datalakeClient = new DatalakeServiceClient(
