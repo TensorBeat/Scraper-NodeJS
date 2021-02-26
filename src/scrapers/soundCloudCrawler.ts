@@ -72,11 +72,23 @@ export class SoundCloudCrawler {
         logger.debug(`Start crawling: ${job.data.songUrl}`)
 
         const relatedUrls = await this.getRelatedSongUrls(songUrl)
-        await this.sendSongsToWorkerQueue(relatedUrls)
-        await this.sendUrlsToCrawlerQueue(relatedUrls)
+
+        const seen = await Promise.all(
+            relatedUrls.map((url) =>
+                this.redisConnection.sismember(Config.SC_CRAWLER_SEEN_NAME, url)
+            )
+        )
+
+        const unseenUrls = relatedUrls.filter((_, i) => {
+            return seen[i] == 0
+        })
+
+        await this.sendSongsToWorkerQueue(unseenUrls)
+        await this.sendUrlsToCrawlerQueue(unseenUrls)
+        await this.redisConnection.sadd(Config.SC_CRAWLER_SEEN_NAME, unseenUrls)
 
         logger.info(
-            `Added ${relatedUrls.length} songs from crawling: ${job.data.songUrl}`
+            `Added ${unseenUrls.length} songs from crawling: ${job.data.songUrl}`
         )
 
         return 'done'
@@ -142,22 +154,7 @@ export class SoundCloudCrawler {
         for (let i = 0; i < songUrls.length; i++) {
             const songUrl = songUrls[i]
             logger.debug(`Sent to crawler queue: ${songUrl}`)
-
-            const alreadySeen = await this.redisConnection.sismember(
-                Config.SC_CRAWLER_SEEN_NAME,
-                songUrl
-            )
-
-            if (alreadySeen == 0) {
-                const queueAdd = this.crawlerQueue.add(songUrl, {
-                    songUrl: songUrl,
-                })
-                const seenAdd = this.redisConnection.sadd(
-                    Config.SC_CRAWLER_SEEN_NAME,
-                    songUrl
-                )
-                await Promise.all([queueAdd, seenAdd])
-            }
+            this.crawlerQueue.add(songUrl, { songUrl: songUrl })
         }
     }
 
