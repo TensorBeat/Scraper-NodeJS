@@ -18,6 +18,7 @@ export class SoundCloudCrawler {
     datalake: Datalake
     worker: Worker<SoundCloudCrawlerJobData, SoundCloudCrawlerJobReturn>
     crawlerQueue: Queue<SoundCloudCrawlerJobData, SoundCloudCrawlerJobReturn>
+    redisConnection: IORedis.Redis
 
     constructor(
         songQueue: Queue<SongJobData, SongJobReturn>,
@@ -42,6 +43,7 @@ export class SoundCloudCrawler {
         this.datalake = datalake
 
         this.crawlerQueue = crawlerQueue
+        this.redisConnection = redisConnection
 
         this.worker = new Worker<
             SoundCloudCrawlerJobData,
@@ -140,7 +142,22 @@ export class SoundCloudCrawler {
         for (let i = 0; i < songUrls.length; i++) {
             const songUrl = songUrls[i]
             logger.debug(`Sent to crawler queue: ${songUrl}`)
-            await this.crawlerQueue.add(songUrl, { songUrl: songUrl })
+
+            const alreadySeen = await this.redisConnection.sismember(
+                Config.SC_CRAWLER_SEEN_NAME,
+                songUrl
+            )
+
+            if (alreadySeen == 0) {
+                const queueAdd = this.crawlerQueue.add(songUrl, {
+                    songUrl: songUrl,
+                })
+                const seenAdd = this.redisConnection.sadd(
+                    Config.SC_CRAWLER_SEEN_NAME,
+                    songUrl
+                )
+                await Promise.all([queueAdd, seenAdd])
+            }
         }
     }
 

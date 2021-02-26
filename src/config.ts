@@ -40,6 +40,14 @@ export class Config {
             ? Config.PROD_SC_CRAWLER_QUEUE_NAME
             : Config.TEST_SC_CRAWLER_QUEUE_NAME)
 
+    static readonly PROD_SC_CRAWLER_SEEN_NAME = 'scraperCrawlSeenSet'
+    static readonly TEST_SC_CRAWLER_SEEN_NAME = 'scraperTestCrawlSeenSet'
+    static readonly SC_CRAWLER_SEEN_NAME =
+        process.env.SC_CRAWLER_SEEN_NAME ??
+        (Config.IS_PRODUCTION
+            ? Config.PROD_SC_CRAWLER_SEEN_NAME
+            : Config.TEST_SC_CRAWLER_SEEN_NAME)
+
     static readonly SC_SEED_CHARTS_URLS: string[] = [
         'https://soundcloud.com/discover/sets/charts-trending:all-music:us',
         'https://soundcloud.com/discover/sets/charts-trending:pop:us',

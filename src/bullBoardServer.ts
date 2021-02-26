@@ -6,19 +6,19 @@ import { makeRedisConnection } from './services/redis'
 import express from 'express'
 import { logger } from './logger'
 ;(async () => {
-    const redisConnection = await makeRedisConnection()
+    const redis = await makeRedisConnection()
 
     const testSongQueue = new Queue(Config.TEST_SONG_QUEUE_NAME, {
-        connection: redisConnection,
+        connection: redis,
     })
     const testCrawlerQueue = new Queue(Config.TEST_SC_CRAWLER_QUEUE_NAME, {
-        connection: redisConnection,
+        connection: redis,
     })
     const prodSongQueue = new Queue(Config.PROD_SONG_QUEUE_NAME, {
-        connection: redisConnection,
+        connection: redis,
     })
     const prodCrawlerQueue = new Queue(Config.PROD_SC_CRAWLER_QUEUE_NAME, {
-        connection: redisConnection,
+        connection: redis,
     })
 
     setQueues([

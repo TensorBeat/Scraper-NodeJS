@@ -4,7 +4,7 @@ metadata:
     namespace: tensorbeat
     name: scraper-soundcloud-crawler
 spec:
-    replicas: 2
+    replicas: 10
     selector:
         matchLabels:
             app: scraper-soundcloud-crawler
@@ -13,13 +13,25 @@ spec:
             labels:
                 app: scraper-soundcloud-crawler
         spec:
+            affinity:
+                nodeAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                        - weight: 1
+                          preference:
+                              matchExpressions:
+                                  - key: cloud.google.com/gke-preemptible
+                                    operator: Exists
+            tolerations:
+                - key: cloud.google.com/gke-preemptible
+                  operator: Exists
+                  effect: NoSchedule
             volumes:
                 - name: google-cloud-key
                   secret:
                       secretName: gcp-admin-key
             containers:
                 - name: scraper-soundcloud-crawler
-                  image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.13
+                  image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.3.0
                   volumeMounts:
                       - name: google-cloud-key
                         mountPath: /var/secrets/google
@@ -46,7 +58,7 @@ metadata:
     namespace: tensorbeat
     name: scraper-song-worker
 spec:
-    replicas: 8
+    replicas: 4
     selector:
         matchLabels:
             app: scraper-song-worker
@@ -73,7 +85,7 @@ spec:
                       secretName: gcp-admin-key
             containers:
                 - name: scraper-song-worker
-                  image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.1.13
+                  image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.3.0
                   volumeMounts:
                       - name: google-cloud-key
                         mountPath: /var/secrets/google
