@@ -1,107 +1,107 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    namespace: tensorbeat
-    name: scraper-soundcloud-crawler
+  namespace: tensorbeat
+  name: scraper-soundcloud-crawler
 spec:
-    replicas: 1
-    selector:
-        matchLabels:
-            app: scraper-soundcloud-crawler
-    template:
-        metadata:
-            labels:
-                app: scraper-soundcloud-crawler
-        spec:
-            affinity:
-                nodeAffinity:
-                    preferredDuringSchedulingIgnoredDuringExecution:
-                        - weight: 1
-                          preference:
-                              matchExpressions:
-                                  - key: cloud.google.com/gke-preemptible
-                                    operator: Exists
-            tolerations:
-                - key: cloud.google.com/gke-preemptible
-                  operator: Exists
-                  effect: NoSchedule
-            volumes:
-                - name: google-cloud-key
-                  secret:
-                      secretName: gcp-admin-key
-            containers:
-                - name: scraper-soundcloud-crawler
-                  image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.3.1
-                  volumeMounts:
-                      - name: google-cloud-key
-                        mountPath: /var/secrets/google
-                  env:
-                      - name: IS_CRAWLER
-                        value: 'true'
-                      - name: NODE_ENV
-                        value: production
-                      - name: DATALAKE_ADDRESS
-                        value: datalake:50051
-                      - name: GOOGLE_APPLICATION_CREDENTIALS
-                        value: /var/secrets/google/key.json
-                      - name: REDIS_HOST
-                        value: redis-master.redis.svc.cluster.local
-                      - name: REDIS_PASSWORD
-                        valueFrom:
-                            secretKeyRef:
-                                name: redis
-                                key: redis-password
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scraper-soundcloud-crawler
+  template:
+    metadata:
+      labels:
+        app: scraper-soundcloud-crawler
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: cloud.google.com/gke-preemptible
+                    operator: Exists
+      tolerations:
+        - key: cloud.google.com/gke-preemptible
+          operator: Exists
+          effect: NoSchedule
+      volumes:
+        - name: google-cloud-key
+          secret:
+            secretName: gcp-admin-key
+      containers:
+        - name: scraper-soundcloud-crawler
+          image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.3.1
+          volumeMounts:
+            - name: google-cloud-key
+              mountPath: /var/secrets/google
+          env:
+            - name: IS_CRAWLER
+              value: "true"
+            - name: NODE_ENV
+              value: production
+            - name: DATALAKE_ADDRESS
+              value: datalake:50051
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/key.json
+            - name: REDIS_HOST
+              value: redis-master.redis.svc.cluster.local
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis
+                  key: redis-password
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    namespace: tensorbeat
-    name: scraper-song-worker
+  namespace: tensorbeat
+  name: scraper-song-worker
 spec:
-    replicas: 10
-    selector:
-        matchLabels:
-            app: scraper-song-worker
-    template:
-        metadata:
-            labels:
-                app: scraper-song-worker
-        spec:
-            affinity:
-                nodeAffinity:
-                    preferredDuringSchedulingIgnoredDuringExecution:
-                        - weight: 1
-                          preference:
-                              matchExpressions:
-                                  - key: cloud.google.com/gke-preemptible
-                                    operator: Exists
-            tolerations:
-                - key: cloud.google.com/gke-preemptible
-                  operator: Exists
-                  effect: NoSchedule
-            volumes:
-                - name: google-cloud-key
-                  secret:
-                      secretName: gcp-admin-key
-            containers:
-                - name: scraper-song-worker
-                  image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.3.1
-                  volumeMounts:
-                      - name: google-cloud-key
-                        mountPath: /var/secrets/google
-                  env:
-                      - name: IS_WORKER
-                        value: 'true'
-                      - name: NODE_ENV
-                        value: production
-                      - name: DATALAKE_ADDRESS
-                        value: datalake:50051
-                      - name: GOOGLE_APPLICATION_CREDENTIALS
-                        value: /var/secrets/google/key.json
-                      - name: REDIS_HOST
-                        value: redis-master.redis.svc.cluster.local
-                      - name: REDIS_PASSWORD
-                        valueFrom:
-                            secretKeyRef:
-                                name: redis
-                                key: redis-password
+  replicas: 10
+  selector:
+    matchLabels:
+      app: scraper-song-worker
+  template:
+    metadata:
+      labels:
+        app: scraper-song-worker
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: cloud.google.com/gke-preemptible
+                    operator: Exists
+      tolerations:
+        - key: cloud.google.com/gke-preemptible
+          operator: Exists
+          effect: NoSchedule
+      volumes:
+        - name: google-cloud-key
+          secret:
+            secretName: gcp-admin-key
+      containers:
+        - name: scraper-song-worker
+          image: gcr.io/rowan-senior-project/tensorbeat-scraper:v0.3.1
+          volumeMounts:
+            - name: google-cloud-key
+              mountPath: /var/secrets/google
+          env:
+            - name: IS_WORKER
+              value: "true"
+            - name: NODE_ENV
+              value: production
+            - name: DATALAKE_ADDRESS
+              value: datalake:50051
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/key.json
+            - name: REDIS_HOST
+              value: redis-master.redis.svc.cluster.local
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis
+                  key: redis-password
