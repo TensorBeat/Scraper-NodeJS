@@ -29,6 +29,11 @@ import { SongWorker } from './songWorker'
         Config.SONG_QUEUE_NAME,
         {
             connection: redisConnection,
+            defaultJobOptions: {
+                removeOnComplete: 1000,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
         }
     )
     const crawlerQueue = new Queue<
@@ -36,6 +41,11 @@ import { SongWorker } from './songWorker'
         SoundCloudCrawlerJobReturn
     >(Config.SC_CRAWLER_QUEUE_NAME, {
         connection: redisConnection,
+        defaultJobOptions: {
+            removeOnComplete: 1000,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 1000 },
+        },
     })
 
     onShutdown(Const.SHUTDOWN_FINAL, [Const.SHUTDOWN_PHASE_ONE], async () => {
