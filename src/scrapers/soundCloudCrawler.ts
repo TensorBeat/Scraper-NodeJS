@@ -83,15 +83,20 @@ export class SoundCloudCrawler {
             return seen[i] == 0
         })
 
-        await this.sendSongsToWorkerQueue(unseenUrls)
-        await this.sendUrlsToCrawlerQueue(unseenUrls)
-        await this.redisConnection.sadd(Config.SC_CRAWLER_SEEN_NAME, unseenUrls)
+        if (unseenUrls.length > 0) {
+            await this.sendSongsToWorkerQueue(unseenUrls)
+            await this.sendUrlsToCrawlerQueue(unseenUrls)
+            await this.redisConnection.sadd(
+                Config.SC_CRAWLER_SEEN_NAME,
+                unseenUrls
+            )
+        }
 
         logger.info(
             `Added ${unseenUrls.length} songs from crawling: ${job.data.songUrl}`
         )
 
-        return 'done'
+        return unseenUrls.length
     }
 
     async maybeSeedCrawlerQueue() {
