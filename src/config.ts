@@ -25,6 +25,12 @@ export class Config {
         ? 'tensorbeat-songs'
         : 'test-tensorbeat-songs'
 
+    static SPOTIFY_CRAWLER_QUEUE_NAME =
+        process.env.SPOTIFY_CRAWLER_QUEUE_NAME ??
+        (Config.IS_PRODUCTION ? 'scraperCrawlQueue' : 'scraperTestCrawlQueue')
+    static SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
+    static SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
+
     static SC_CRAWLER_QUEUE_NAME =
         process.env.SC_CRAWLER_QUEUE_NAME ??
         (Config.IS_PRODUCTION ? 'scraperCrawlQueue' : 'scraperTestCrawlQueue')

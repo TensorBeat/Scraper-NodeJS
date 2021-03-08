@@ -14,16 +14,20 @@
     "dependencies": {
         "@google-cloud/storage": "^5.8.0",
         "@grpc/grpc-js": "^1.2.8",
+        "@types/spotify-web-api-node": "^5.0.1",
+        "@types/yt-search": "^2.3.0",
         "bullmq": "^1.14.7",
         "cheerio": "^1.0.0-rc.5",
         "dotenv": "^8.2.0",
         "fast-glob": "^3.2.5",
         "google-protobuf": "^3.15.1",
         "puppeteer": "^7.1.0",
+        "spotify-web-api-node": "^5.0.2",
         "ts-node": "^9.1.1",
         "uuid": "^8.3.2",
         "winston": "^3.3.3",
-        "youtube-dl": "^3.4.1"
+        "youtube-dl": "^3.4.1",
+        "yt-search": "^2.7.3"
     },
     "devDependencies": {
         "@types/google-protobuf": "^3.7.4",
