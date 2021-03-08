@@ -44,16 +44,29 @@ export class Config {
         ? 'tensorbeat-songs'
         : 'test-tensorbeat-songs'
 
-    static readonly PROD_SC_CRAWLER_QUEUE_NAME = 'scraperCrawlQueue'
-    static readonly TEST_SC_CRAWLER_QUEUE_NAME = 'scraperTestCrawlQueue'
-    static readonly SC_CRAWLER_QUEUE_NAME =
+    static readonly PROD_SC_CRAWLER_QUEUE_NAME = 'scScraperCrawlQueue'
+    static readonly TEST_SC_CRAWLER_QUEUE_NAME = 'scScraperTestCrawlQueue'
+    static readonly PROD_SPOTIFY_CRAWLER_QUEUE_NAME = 'spotifyScraperCrawlQueue'
+    static readonly TEST_SPOTIFY_CRAWLER_QUEUE_NAME = 'spotifyScraperTestCrawlQueue'
+
+    static SC_CRAWLER_QUEUE_NAME =
         process.env.SC_CRAWLER_QUEUE_NAME ??
         (Config.IS_PRODUCTION
             ? Config.PROD_SC_CRAWLER_QUEUE_NAME
             : Config.TEST_SC_CRAWLER_QUEUE_NAME)
 
+    static SPOTIFY_CRAWLER_QUEUE_NAME =
+        process.env.SPOTIFY_CRAWLER_QUEUE_NAME ??
+        (Config.IS_PRODUCTION
+            ? Config.PROD_SPOTIFY_CRAWLER_QUEUE_NAME
+            : Config.TEST_SPOTIFY_CRAWLER_QUEUE_NAME)
+
+    static SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
+    static SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
+
     static readonly PROD_SC_CRAWLER_SEEN_NAME = 'scraperCrawlSeenSet'
     static readonly TEST_SC_CRAWLER_SEEN_NAME = 'scraperTestCrawlSeenSet'
+
     static readonly SC_CRAWLER_SEEN_NAME =
         process.env.SC_CRAWLER_SEEN_NAME ??
         (Config.IS_PRODUCTION
