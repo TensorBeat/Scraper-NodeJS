@@ -206,8 +206,8 @@ export class SpotifyCrawler {
         songName: string,
         artistNames: string[]
     ) => {
-        let searchTerm = `${songName} ${artistNames.join(' ')}`
         try {
+            let searchTerm = `${songName} ${artistNames.join(' ')}`
             this.attemptToFindSongOnYouTube(searchTerm) ??
                 this.attemptToFindSongOnYouTube(searchTerm.replace('-', ' '))
         } catch (err) {
