@@ -192,6 +192,9 @@ export class SpotifyCrawler {
     // ADAPTED FROM https://github.com/SwapnilSoni1999/spotify-dl/blob/master/util/get-link.js
     private attemptToFindSongOnYouTube = async (searchTerm: string) => {
         let searchResult = await searchYouTube(searchTerm)
+        if (searchResult.videos.length == 0) {
+            return null
+        }
         let [topResult] = searchResult.videos
         return topResult.url.startsWith('https://youtube.com')
             ? topResult.url
@@ -205,13 +208,10 @@ export class SpotifyCrawler {
     ) => {
         let searchTerm = `${songName} ${artistNames.join(' ')}`
         try {
-            this.attemptToFindSongOnYouTube(searchTerm)
-        } catch (_) {
-            try {
+            this.attemptToFindSongOnYouTube(searchTerm) ??
                 this.attemptToFindSongOnYouTube(searchTerm.replace('-', ' '))
-            } catch (err: any) {
-                return err
-            }
+        } catch (err) {
+            return err
         }
     }
 }
