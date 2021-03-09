@@ -37,7 +37,9 @@ export class Config {
 
     static SC_CRAWLER_QUEUE_NAME =
         process.env.SC_CRAWLER_QUEUE_NAME ??
-        (Config.IS_PRODUCTION ? 'scraperCrawlQueue' : 'scraperTestCrawlQueue')
+        (Config.IS_PRODUCTION
+            ? 'spotifyScraperCrawlQueue'
+            : 'spotifyScraperTestCrawlQueue')
 
     static SC_SEED_CHARTS_URLS: string[] = [
         'https://soundcloud.com/discover/sets/charts-trending:all-music:us',
