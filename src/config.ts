@@ -32,14 +32,6 @@ export class Config {
         (process.env.CRAWLER_TYPE && process.env.CRAWLER_TYPE.toLowerCase()) ??
         'soundcloud'
 
-    static readonly SPOTIFY_CRAWLER_QUEUE_NAME =
-        process.env.SPOTIFY_CRAWLER_QUEUE_NAME ??
-        (Config.IS_PRODUCTION
-            ? 'spotifyScraperCrawlQueue'
-            : 'spotifyScraperTestCrawlQueue')
-    static readonly SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
-    static readonly SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
-
     static readonly BUCKET_NAME = Config.IS_PRODUCTION
         ? 'tensorbeat-songs'
         : 'test-tensorbeat-songs'
@@ -47,22 +39,23 @@ export class Config {
     static readonly PROD_SC_CRAWLER_QUEUE_NAME = 'scScraperCrawlQueue'
     static readonly TEST_SC_CRAWLER_QUEUE_NAME = 'scScraperTestCrawlQueue'
     static readonly PROD_SPOTIFY_CRAWLER_QUEUE_NAME = 'spotifyScraperCrawlQueue'
-    static readonly TEST_SPOTIFY_CRAWLER_QUEUE_NAME = 'spotifyScraperTestCrawlQueue'
+    static readonly TEST_SPOTIFY_CRAWLER_QUEUE_NAME =
+        'spotifyScraperTestCrawlQueue'
 
-    static SC_CRAWLER_QUEUE_NAME =
+    static readonly SC_CRAWLER_QUEUE_NAME =
         process.env.SC_CRAWLER_QUEUE_NAME ??
         (Config.IS_PRODUCTION
             ? Config.PROD_SC_CRAWLER_QUEUE_NAME
             : Config.TEST_SC_CRAWLER_QUEUE_NAME)
 
-    static SPOTIFY_CRAWLER_QUEUE_NAME =
+    static readonly SPOTIFY_CRAWLER_QUEUE_NAME =
         process.env.SPOTIFY_CRAWLER_QUEUE_NAME ??
         (Config.IS_PRODUCTION
             ? Config.PROD_SPOTIFY_CRAWLER_QUEUE_NAME
             : Config.TEST_SPOTIFY_CRAWLER_QUEUE_NAME)
 
-    static SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
-    static SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
+    static readonly SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
+    static readonly SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
 
     static readonly PROD_SC_CRAWLER_SEEN_NAME = 'scraperCrawlSeenSet'
     static readonly TEST_SC_CRAWLER_SEEN_NAME = 'scraperTestCrawlSeenSet'
