@@ -31,10 +31,6 @@ export class SongWorker {
             this.onJob.bind(this),
             {
                 connection: redisConnection,
-                limiter: {
-                    max: 10,
-                    duration: 1000,
-                },
             }
         )
     }

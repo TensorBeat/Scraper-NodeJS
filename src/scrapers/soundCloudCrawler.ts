@@ -18,11 +18,16 @@ export class SoundCloudCrawler {
     datalake: Datalake
     worker: Worker<SoundCloudCrawlerJobData, SoundCloudCrawlerJobReturn>
     crawlerQueue: Queue<SoundCloudCrawlerJobData, SoundCloudCrawlerJobReturn>
+    redisConnection: IORedis.Redis
 
     constructor(
         songQueue: Queue<SongJobData, SongJobReturn>,
         datalake: Datalake,
-        redisConnection: IORedis.Redis
+        redisConnection: IORedis.Redis,
+        crawlerQueue: Queue<
+            SoundCloudCrawlerJobData,
+            SoundCloudCrawlerJobReturn
+        >
     ) {
         this.browser = puppeteer.launch({
             defaultViewport: {
@@ -37,22 +42,14 @@ export class SoundCloudCrawler {
         this.songQueue = songQueue
         this.datalake = datalake
 
-        this.crawlerQueue = new Queue<
-            SoundCloudCrawlerJobData,
-            SoundCloudCrawlerJobReturn
-        >(Config.SC_CRAWLER_QUEUE_NAME, {
-            connection: redisConnection,
-        })
+        this.crawlerQueue = crawlerQueue
+        this.redisConnection = redisConnection
 
         this.worker = new Worker<
             SoundCloudCrawlerJobData,
             SoundCloudCrawlerJobReturn
         >(Config.SC_CRAWLER_QUEUE_NAME, this.onJob.bind(this), {
             connection: redisConnection,
-            limiter: {
-                max: 3,
-                duration: 1000,
-            },
         })
 
         // give crawler queue the opportunity to make first batch of songs varied
@@ -74,18 +71,32 @@ export class SoundCloudCrawler {
         const songUrl = job.data.songUrl
         logger.debug(`Start crawling: ${job.data.songUrl}`)
 
-        const alreadyDownloaded = await this.datalake.doesSongExist(songUrl)
-        if (alreadyDownloaded) return 'already downloaded'
-
         const relatedUrls = await this.getRelatedSongUrls(songUrl)
-        await this.sendSongsToWorkerQueue(relatedUrls)
-        await this.sendUrlsToCrawlerQueue(relatedUrls)
 
-        logger.info(
-            `Added ${relatedUrls.length} songs from crawling: ${job.data.songUrl}`
+        const seen = await Promise.all(
+            relatedUrls.map((url) =>
+                this.redisConnection.sismember(Config.SC_CRAWLER_SEEN_NAME, url)
+            )
         )
 
-        return 'done'
+        const unseenUrls = relatedUrls.filter((_, i) => {
+            return seen[i] == 0
+        })
+
+        if (unseenUrls.length > 0) {
+            await this.sendSongsToWorkerQueue(unseenUrls)
+            await this.sendUrlsToCrawlerQueue(unseenUrls)
+            await this.redisConnection.sadd(
+                Config.SC_CRAWLER_SEEN_NAME,
+                unseenUrls
+            )
+        }
+
+        logger.info(
+            `Added ${unseenUrls.length} songs from crawling: ${job.data.songUrl}`
+        )
+
+        return unseenUrls.length
     }
 
     async maybeSeedCrawlerQueue() {
@@ -148,7 +159,7 @@ export class SoundCloudCrawler {
         for (let i = 0; i < songUrls.length; i++) {
             const songUrl = songUrls[i]
             logger.debug(`Sent to crawler queue: ${songUrl}`)
-            await this.crawlerQueue.add(songUrl, { songUrl: songUrl })
+            this.crawlerQueue.add(songUrl, { songUrl: songUrl })
         }
     }
 
