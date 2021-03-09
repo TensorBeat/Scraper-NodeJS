@@ -34,7 +34,7 @@ export class SpotifyCrawler {
                 this.spotifyApi.setAccessToken(data.body['access_token'])
             },
             (err) => {
-                console.error(
+                logger.error(
                     'An error occurred when fetching client credentials:\n',
                     err
                 )
@@ -141,11 +141,6 @@ export class SpotifyCrawler {
                     seed_tracks: [id],
                 })
                 .then(this.parseAndPushRecommendations)
-
-            this.findSongOnYouTube(
-                meta.name as string,
-                meta.artists as string[]
-            )
             return 'done'
         },
     }
@@ -180,13 +175,25 @@ export class SpotifyCrawler {
     }
 
     private maybeSeedCrawlerQueue = async () => {
+        logger.info('Getting Genre Seeds')
         if ((await this.crawlerQueue.getWaitingCount()) != 0) {
             return
-        } else {
-            this.spotifyApi.getAvailableGenreSeeds().then((res) => {
-                console.log(res)
-            })
         }
+        this.spotifyApi.getAvailableGenreSeeds().then((res) => {
+            logger.info('Got Genre Seeds')
+            this.crawlerQueue.addBulk(
+                res.body.genres.map((genre) => {
+                    return {
+                        name: genre,
+                        data: {
+                            jobType: 'genre',
+                            id: genre,
+                            meta: {},
+                        },
+                    }
+                })
+            )
+        })
     }
 
     // ADAPTED FROM https://github.com/SwapnilSoni1999/spotify-dl/blob/master/util/get-link.js
