@@ -101,7 +101,7 @@ export class SpotifyCrawler {
                 .then(this.parseAndPushRecommendations)
             return 'done'
         },
-        artist: async (id, meta) => {
+        artist: async (_id, meta) => {
             this.spotifyApi
                 .getRecommendations({
                     seed_artists: meta.name,
@@ -109,7 +109,7 @@ export class SpotifyCrawler {
                 .then(this.parseAndPushRecommendations)
             return 'done'
         },
-        album: async (id, meta) => {
+        album: async (id, _meta) => {
             this.spotifyApi.getAlbumTracks(id).then(async (response) => {
                 this.songQueue.addBulk(
                     await Promise.all(
@@ -131,7 +131,7 @@ export class SpotifyCrawler {
             })
             return 'done'
         },
-        track: async (id, meta) => {
+        track: async (id, _meta) => {
             const dataLakeId = this.buildDataLakeId(id)
             if (await this.datalake.doesSongExist(dataLakeId)) {
                 return 'already downloaded'
