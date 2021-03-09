@@ -34,7 +34,9 @@ export class Config {
 
     static readonly SPOTIFY_CRAWLER_QUEUE_NAME =
         process.env.SPOTIFY_CRAWLER_QUEUE_NAME ??
-        (Config.IS_PRODUCTION ? 'scraperCrawlQueue' : 'scraperTestCrawlQueue')
+        (Config.IS_PRODUCTION
+            ? 'spotifyScraperCrawlQueue'
+            : 'spotifyScraperTestCrawlQueue')
     static readonly SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
     static readonly SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
 
