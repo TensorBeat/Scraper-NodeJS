@@ -21,6 +21,10 @@ export class Config {
     static IS_CRAWLER = process.env.IS_CRAWLER == 'true'
     static IS_BOTH = !Config.IS_WORKER && !Config.IS_CRAWLER
 
+    static CRAWLER_TYPE =
+        (process.env.CRAWLER_TYPE && process.env.CRAWLER_TYPE.toLowerCase()) ??
+        'soundcloud'
+
     static BUCKET_NAME = Config.IS_PRODUCTION
         ? 'tensorbeat-songs'
         : 'test-tensorbeat-songs'

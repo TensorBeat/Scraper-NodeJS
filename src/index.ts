@@ -9,6 +9,7 @@ import { GetAllSongsRequest } from './generated/tensorbeat/datalake_pb'
 import { SongJobData, SongJobReturn } from './interface/songJob'
 import { logger } from './logger'
 import { SoundCloudCrawler } from './scrapers/soundCloudCrawler'
+import { SpotifyCrawler } from './scrapers/spotifyCrawler'
 import { Datalake } from './services/datalake'
 import { SongWorker } from './songWorker'
 ;(async () => {
@@ -42,11 +43,11 @@ import { SongWorker } from './songWorker'
     }
 
     if (Config.IS_CRAWLER || Config.IS_BOTH) {
-        const scraper = new SoundCloudCrawler(
-            songQueue,
-            datalake,
-            redisConnection
-        )
+        let Crawler =
+            Config.CRAWLER_TYPE == 'soundcloud'
+                ? SoundCloudCrawler
+                : SpotifyCrawler
+        const scraper = new Crawler(songQueue, datalake, redisConnection)
         process.on('SIGTERM', async () => {
             await scraper.close()
         })
