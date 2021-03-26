@@ -78,7 +78,7 @@ export class SpotifyCrawler {
         job: Job<SpotifyCrawlerJobData, SpotifyCrawlerJobReturn>
     ) => {
         // VERY USEFUL FOR API SEARCH: https://developer.spotify.com/console/
-        logger.debug(`Start crawling: ${job.data.jobType} ${job.data.id}`)
+        logger.debug(`Crawling: ${job.data.jobType} ${job.data.id}`)
 
         return await this.jobFunctions[job.data.jobType](
             job.data.id,
@@ -130,7 +130,7 @@ export class SpotifyCrawler {
             })
             return 'done'
         },
-        track: async (id, _meta) => {
+        track: async (id, meta) => {
             const dataLakeId = this.buildDataLakeId(id)
             if (await this.datalake.doesSongExist(dataLakeId)) {
                 return 'already downloaded'
@@ -140,6 +140,14 @@ export class SpotifyCrawler {
                     seed_tracks: [id],
                 })
                 .then(this.parseAndPushRecommendations)
+
+            this.songQueue.add(this.buildDataLakeId(id), {
+                downloadUrl: await this.findSongOnYouTube(
+                    meta['name'] as string,
+                    meta['artists'] as string[]
+                ),
+            })
+
             return 'done'
         },
     }
@@ -174,11 +182,19 @@ export class SpotifyCrawler {
     }
 
     private maybeSeedCrawlerQueue = async () => {
+        const crawlerQueueLength = await this.crawlerQueue.getWaitingCount()
+        if (crawlerQueueLength != 0) {
+            logger.info(
+                `Crawler queue already contains ${crawlerQueueLength} jobs. Skipping seeding!`
+            )
+            return
+        }
+
         logger.info('Getting Genre Seeds')
         if ((await this.crawlerQueue.getWaitingCount()) != 0) {
             return
         }
-        this.spotifyApi.getAvailableGenreSeeds().then((res) => {
+        await this.spotifyApi.getAvailableGenreSeeds().then((res) => {
             logger.info('Got Genre Seeds')
             this.crawlerQueue.addBulk(
                 res.body.genres.map((genre) => {
@@ -214,8 +230,13 @@ export class SpotifyCrawler {
     ) => {
         try {
             let searchTerm = `${songName} ${artistNames.join(' ')}`
-            this.attemptToFindSongOnYouTube(searchTerm) ??
-                this.attemptToFindSongOnYouTube(searchTerm.replace('-', ' '))
+            let songLink =
+                (await this.attemptToFindSongOnYouTube(searchTerm)) ??
+                (await this.attemptToFindSongOnYouTube(
+                    searchTerm.replace('-', ' ')
+                ))
+            logger.debug(`Found ${songName} by ${artistNames} at ${songLink}`)
+            return songLink
         } catch (err) {
             return err
         }
