@@ -10,7 +10,6 @@ import { Datalake } from '../services/datalake'
 import IORedis from 'ioredis'
 import searchYouTube from 'yt-search'
 import SpotifyWebAPI from 'spotify-web-api-node'
-import { METHODS } from 'node:http'
 
 export class SpotifyCrawler {
     songQueue: Queue<SongJobData, SongJobReturn>
