@@ -5,6 +5,7 @@ import fs from 'fs'
 import IORedis from 'ioredis'
 import { v4 as uuidv4 } from 'uuid'
 import { Config } from './config'
+import { SongAttributes } from './consts'
 import { AddFile } from './generated/tensorbeat/common_pb'
 import { SongJobData, SongJobReturn } from './interface/songJob'
 import { logger } from './logger'
@@ -101,9 +102,15 @@ export class SongWorker {
         const info = fs.readFileSync(infoFileName).toString()
         const infoJson = JSON.parse(info)
 
-        const title = infoJson['title']
-        const genre = infoJson['genre']
-        const artist = infoJson['uploader']
+        const title =
+            (job.data.meta && job.data.meta[SongAttributes.TITLE]) ||
+            infoJson['title']
+        const genre =
+            (job.data.meta && job.data.meta[SongAttributes.GENRE]) ||
+            infoJson['genre']
+        const artist =
+            (job.data.meta && job.data.meta[SongAttributes.ARTIST]) ||
+            infoJson['uploader']
         const views = infoJson['view_count']?.toString()
         const duration = infoJson['duration']?.toString()
         const likes = infoJson['like_count']?.toString()
@@ -111,12 +118,7 @@ export class SongWorker {
 
         const addFile = new AddFile()
 
-        if (title != null) {
-            addFile.setName(title)
-        } else {
-            addFile.setName(songFileName)
-        }
-
+        addFile.setName(title || songFileName)
         addFile.setMimetype('audio/mpeg')
         addFile.setUri(gcloudUri)
         addFile.getTagsMap().set('downloadUrl', downloadUrl)

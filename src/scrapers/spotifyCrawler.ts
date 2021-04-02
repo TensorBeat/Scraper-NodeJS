@@ -10,6 +10,7 @@ import { Datalake } from '../services/datalake'
 import IORedis from 'ioredis'
 import searchYouTube from 'yt-search'
 import SpotifyWebAPI from 'spotify-web-api-node'
+import { SongAttributes } from '../consts'
 
 export class SpotifyCrawler {
     songQueue: Queue<SongJobData, SongJobReturn>
@@ -146,6 +147,10 @@ export class SpotifyCrawler {
                     meta['name'] as string,
                     meta['artists'] as string[]
                 ),
+                meta: {
+                    [SongAttributes.TITLE]: meta['name'] as string,
+                    [SongAttributes.ARTIST]: (meta['artists'] as string[])[0],
+                },
             })
 
             return 'done'
